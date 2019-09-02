@@ -58,14 +58,14 @@ update(){
         
         */
 
-var game = new Phaser.Game(1200, 900, Phaser.CANVAS, "GameDiv")
+var game = new Phaser.Game(700, 700, Phaser.CANVAS, "GameDiv")
 
 class Player{
     constructor(){
         this.sprite = game.add.sprite(400,800,"player");
         this.sprite.anchor.setTo(0.5,0.5)
         game.physics.arcade.enable(this.sprite)
-        this.moveSpeed = 300;
+        this.moveSpeed = 1000;
         
     }
     update(){
@@ -76,18 +76,83 @@ class Player{
     }
     
 }
-var player
+
+class Bullet{
+    constructor(x,y,type,target){
+        this.sprite = game.add.sprite(x,y,type)
+        game.physics.arcade.enable(this.sprite)
+        this.target = target
+    }
+    setAngle(){
+        this.sprite.rotation = game.physics.arcade.angleBetween(this.sprite,this.target)
+    }
+    move(){
+        
+    }
+    update(){
+        this.move();
+    }
+}
+class NormalBullet extends Bullet{
+    constructor(x,y,target){
+        super(x,y,"NormalBullet",target)
+        this.setAngle();
+    }
+    move(){
+        this.setAngle();
+
+        game.physics.arcade.velocityFromAngle(this.sprite.angle,300,this.sprite.body.velocity);
+    }
+}
+
+class TrackingBullet extends Bullet{
+    constructor(x,y,target){
+        super(x,y,"TrackingBullet",target)
+        this.setAngle();
+    }
+    move(){
+        this.setAngle();
+        game.physics.arcade.velocityFromAngle(this.sprite.angle,100,this.sprite.body.velocity);
+    }
+}
+
+var player;
+var bullet;
+
+
 var play = {
     preload: function () {
         game.load.image("player", "image.png");
+        game.load.image("NormalBullet","bullet.png");
+        game.load.image("TrackingBullet","trackingbullet.png");
+
     },
     create: function () {
+        game.scale.pageAlignHorizontally=true;
+        game.scale.pageAlignVertically=true;
+        game.stage.backgroundColor="#66bbaa"
+
         player = new Player();
+        bullet = new NormalBullet(300,300,player.sprite)
+        
+
+
 
     },
     update : function() {
-        player.update()
+        player.update();
+        bullet.update();
+        collider();
     }
 }
+
+function collision(player,bullet){
+    bullet.destory();
+}
+
+function collider(){
+    game.physics.arcade.overlap(player.sprite, bullet.sprite,null,this)
+}
+
 game.state.add("Play", play)
 game.state.start("Play")
