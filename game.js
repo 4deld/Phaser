@@ -65,7 +65,7 @@ class Player{
         this.sprite = game.add.sprite(game.world.width/2,game.world.height/2,"player");
         this.sprite.anchor.setTo(0.5,0.5)
         game.physics.arcade.enable(this.sprite)
-        this.moveSpeed = 1300;
+        this.moveSpeed = 1600;
         this.hp = 4;
         
     }
@@ -165,7 +165,10 @@ class System{
     update(){
         if(game.time.now >= this.spawnTime){
             this.randomSpawn();
+            score +=10;
+            if(this.spawnDelay>=1000){
             this.spawnDelay *= 0.9;
+            }
             this.spawnTime = game.time.now + this.spawnDelay;
         }
         for(let i=0; i<bullets.length; i++){
@@ -180,20 +183,18 @@ var player;
 var bullets=[];
 var system;
 var pplayer;
-
+var score;
+var scoreText;
 var play = {
-    preload: function () {
-        game.load.image("player", "image.png");
-        game.load.image("NormalBullet","Normalbullet.png");
-        game.load.image("TrackingBullet","trackingbullet.png");
-
-    },
+    
     create: function () {
         
 
         player = new Player();
         system = new System();
         text = game.add.text(0, 0, "hp : ");
+        score = 0;
+        scoreText = game.add.text(0,50,"score : ");
 
 
     },
@@ -202,6 +203,7 @@ var play = {
         system.update();
         collider();
         text.setText("hp : "+ player.hp);
+        scoreText.setText("score : "+ score);
     }
 }
 
