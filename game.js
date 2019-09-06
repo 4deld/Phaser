@@ -62,10 +62,11 @@ var game = new Phaser.Game(700, 700, Phaser.CANVAS, "GameDiv")
 
 class Player{
     constructor(){
-        this.sprite = game.add.sprite(400,800,"player");
+        this.sprite = game.add.sprite(game.world.width/2,game.world.height/2,"player");
         this.sprite.anchor.setTo(0.5,0.5)
         game.physics.arcade.enable(this.sprite)
         this.moveSpeed = 1300;
+        this.hp = 4;
         
     }
     update(){
@@ -102,6 +103,7 @@ class Bullet{
         
     }
 }
+
 class NormalBullet extends Bullet{
     constructor(x,y,target){
         super(x,y,"NormalBullet",target)
@@ -119,12 +121,18 @@ class TrackingBullet extends Bullet{
     constructor(x,y,target){
         super(x,y,"TrackingBullet",target)
         this.setAngle();
-        this.killTime = game.time.now + 5000;
+        
+        this.trackOn = true;
     }
     move(){
-        this.setAngle();
+        if(game.physics.arcade.distanceBetween(this.sprite, player.sprite) <=200){
+        this.trackOn = false;
+        }
+        if(this.trackOn){
+            this.setAngle();
+        }
         game.physics.arcade.velocityFromAngle(this.sprite.angle,200,this.sprite.body.velocity);
-        if(game.time.now>= this.killTime){
+        if((this.sprite.x < 0 || this.sprite.x > game.world.width) || (this.sprite.y < 0 || this.sprite.y > game.world.height)){
             this.despawn();
         }
     }
@@ -132,12 +140,13 @@ class TrackingBullet extends Bullet{
 
 class System{
     constructor(){
-        this.spawnTimer = game.time.create(false);
-        this.spawnTimer.loop(3000, this.randomSpawn,this);
+        // 3초 스폰
+        // this.spawnTimer = game.time.create(false);
+        // this.spawnTimer.loop(3000, this.randomSpawn,this);
+        this.spawnDelay = 3000;
+        this.spawnTime = game.time.now + this.spawnDelay;
     }
-    start(){
-        this.spawnTimer.start();
-    }
+    
     randomSpawn(){
         for(let i=0; i<game.rnd.between(3,7); i++){
             let rx = game.rnd.between(0, game.world.width);
@@ -154,6 +163,11 @@ class System{
         }
     }
     update(){
+        if(game.time.now >= this.spawnTime){
+            this.randomSpawn();
+            this.spawnDelay *= 0.9;
+            this.spawnTime = game.time.now + this.spawnDelay;
+        }
         for(let i=0; i<bullets.length; i++){
             if(bullets[i].sprite.alive){
             bullets[i].update();
@@ -165,7 +179,7 @@ class System{
 var player;
 var bullets=[];
 var system;
-
+var pplayer;
 
 var play = {
     preload: function () {
@@ -175,13 +189,11 @@ var play = {
 
     },
     create: function () {
-        game.scale.pageAlignHorizontally=true;
-        game.scale.pageAlignVertically=true;
-        game.stage.backgroundColor="#ffffff"
+        
 
         player = new Player();
         system = new System();
-        system.start();
+        text = game.add.text(0, 0, "hp : ");
 
 
     },
@@ -189,11 +201,15 @@ var play = {
         player.update();
         system.update();
         collider();
+        text.setText("hp : "+ player.hp);
     }
 }
 
-function collision(player,bullet){
+function collision(_player,bullet){
     bullet.destroy();
+    if(--player.hp==0){
+        game.state.start("End");
+    }
 }
 
 function collider(){
@@ -203,4 +219,4 @@ function collider(){
 }
 
 game.state.add("Play", play)
-game.state.start("Play")
+
